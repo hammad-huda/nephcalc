@@ -12,15 +12,15 @@
     header{padding:18px 16px 10px;position:sticky;top:0;background:rgba(11,18,32,.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.06)}
     header h1{margin:0;font-size:18px}
     header p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    main{padding:14px 12px 60px;max-width:1120px;margin:0 auto;display:grid;gap:10px}
+    main{padding:14px 12px 60px;max-width:1200px;margin:0 auto;display:grid;gap:10px}
     .card{background:rgba(17,26,46,.92);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
     .tabs{display:flex;gap:8px;flex-wrap:wrap}
-    .tab{padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#0c1426;color:var(--text);cursor:pointer;font-weight:800}
+    .tab{padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#0c1426;color:var(--text);cursor:pointer;font-weight:900}
     .tab.active{border-color:rgba(106,166,255,.55);box-shadow:0 0 0 2px rgba(106,166,255,.15) inset}
     .label{font-size:12px;color:var(--muted);margin:0 0 6px}
     input,select,button{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0c1426;color:var(--text);padding:12px;font-size:16px;outline:none}
     input::placeholder{color:rgba(159,176,208,.65)}
-    button{background:linear-gradient(180deg, rgba(106,166,255,.25), rgba(106,166,255,.12));border:1px solid rgba(106,166,255,.35);cursor:pointer;font-weight:850}
+    button{background:linear-gradient(180deg, rgba(106,166,255,.25), rgba(106,166,255,.12));border:1px solid rgba(106,166,255,.35);cursor:pointer;font-weight:900}
     button:active{transform:translateY(1px)}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
@@ -35,16 +35,31 @@
     .calcbox{border:1px solid rgba(255,255,255,.10);background:rgba(12,20,38,.55);padding:12px;border-radius:12px;margin-top:12px}
     .calcbox h3{margin:0 0 8px;font-size:13px;color:var(--text)}
     .calcbox pre{margin:0;white-space:pre-wrap;word-break:break-word;color:var(--muted);font-size:12px;line-height:1.35}
-    .mnemo{border:1px solid rgba(106,166,255,.25);background:rgba(106,166,255,.06);padding:12px;border-radius:12px;margin-top:12px}
-    .mnemo h3{margin:0 0 8px;font-size:13px}
-    .mnemo ul{margin:0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.4}
-    @media(min-width:920px){main{grid-template-columns:1.05fr .95fr}}
+    .explain{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);padding:12px;border-radius:12px;margin-top:12px}
+    .explain h3{margin:0 0 8px;font-size:13px}
+    .explain p{margin:0;color:var(--muted);font-size:12px;line-height:1.4}
+    .gauge{border:1px solid rgba(255,255,255,.10);background:rgba(12,20,38,.55);padding:12px;border-radius:12px;margin-top:12px}
+    .gauge h3{margin:0 0 8px;font-size:13px}
+    .bar{position:relative;height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden}
+    .bar .fill{position:absolute;top:0;left:0;height:100%;width:0%;background:rgba(106,166,255,.55)}
+    .bar .tick{position:absolute;top:-6px;width:2px;height:22px;background:rgba(255,255,255,.22)}
+    .bar .marker{position:absolute;top:-4px;width:10px;height:18px;border-radius:6px;background:rgba(255,255,255,.75);transform:translateX(-50%)}
+    .legend{display:flex;justify-content:space-between;margin-top:8px;color:var(--muted);font-size:11px;gap:8px}
+    .mnemoWrap{display:none;margin-top:12px}
+    .mnemoGrid{display:grid;gap:10px}
+    .mnemoCard{border:1px solid rgba(106,166,255,.25);background:rgba(106,166,255,.06);padding:12px;border-radius:12px}
+    .mnemoCard h3{margin:0 0 8px;font-size:13px}
+    .mnemoCard ul{margin:0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.4}
+    @media(min-width:980px){
+      main{grid-template-columns:1.0fr 1.0fr}
+      .mnemoGrid{grid-template-columns:1fr 1fr}
+    }
   </style>
 </head>
 <body>
 <header>
-  <h1>🧪 Acid–Base (Nephro)</h1>
-  <p>Blood gas intake → VBG→ABG estimate → primary disorder → compensation → mixed flags + visible math.</p>
+  <h1>Acid–Base (Nephro)</h1>
+  <p>Includes visible math + side-by-side AGMA (CUTE DIMPLES) vs NAGMA (HARDUP) causes.</p>
 </header>
 
 <main>
@@ -109,39 +124,70 @@
       </div>
 
       <div class="warn">
-        <b>VBG → ABG estimate used in this app:</b><br>
-        pH(ABG) = pH(VBG) + <b>0.05</b> • pCO₂(ABG) = pCO₂(VBG) − <b>5</b> • HCO₃ unchanged.<br>
-        These are approximations; accuracy can decrease in shock/poor perfusion.
+        <b>VBG → ABG estimate:</b> pH + <b>0.05</b>, pCO₂ − <b>5</b>, HCO₃ unchanged. (Approximation.)
       </div>
 
       <div id="errGas" class="err"></div>
     </div>
 
     <div id="panel_analysis" style="margin-top:12px;display:none;">
-      <div class="foot">
-        This panel uses the values from “Blood Gas.” Tap <b>Run</b> there first.
-      </div>
+      <div class="foot">Uses the values from “Blood Gas.” Tap <b>Run</b> first.</div>
       <div id="errAnalysis" class="err"></div>
+
+      <div id="deltaGauge" class="gauge" style="display:none;">
+        <h3>Delta–delta visual (ΔAG/ΔHCO₃)</h3>
+        <div class="bar">
+          <div class="fill" id="ddFill"></div>
+          <div class="tick" style="left:20%"></div>  <!-- 0.8 on 0–4 scale -->
+          <div class="tick" style="left:50%"></div>  <!-- 2.0 on 0–4 scale -->
+          <div class="marker" id="ddMarker" style="left:0%"></div>
+        </div>
+        <div class="legend">
+          <span>&lt;0.8: AGMA + NAGMA</span>
+          <span>0.8–2.0: “pure” AGMA</span>
+          <span>&gt;2.0: AGMA + Met Alk</span>
+        </div>
+        <div class="explain" style="margin-top:10px;">
+          <h3>Delta–delta interpretation</h3>
+          <p id="ddMeaning">—</p>
+        </div>
+      </div>
 
       <div class="calcbox">
         <h3>Visible calculations</h3>
         <pre id="calcSteps">—</pre>
       </div>
 
-      <div id="mnemonicBox" class="mnemo" style="display:none;">
-        <h3>CUTE DIMPLES (High–anion gap metabolic acidosis causes)</h3>
-        <ul>
-          <li><b>C</b> — Cyanide / Carbon monoxide</li>
-          <li><b>U</b> — Uremia</li>
-          <li><b>T</b> — Toluene (often mixed AG + non-AG)</li>
-          <li><b>E</b> — Ethylene glycol</li>
-          <li><b>D</b> — Diabetic ketoacidosis (also consider starvation/alcoholic ketoacidosis clinically)</li>
-          <li><b>I</b> — Isoniazid / Iron</li>
-          <li><b>M</b> — Methanol</li>
-          <li><b>P</b> — Propylene glycol</li>
-          <li><b>L</b> — Lactic acidosis</li>
-          <li><b>S</b> — Salicylates (often mixed resp alkalosis + AGMA)</li>
-        </ul>
+      <!-- Side-by-side mnemonics -->
+      <div id="mnemoWrap" class="mnemoWrap">
+        <div class="mnemoGrid">
+          <div class="mnemoCard">
+            <h3>CUTE DIMPLES (High–anion gap metabolic acidosis)</h3>
+            <ul>
+              <li><b>C</b> — Cyanide / Carbon monoxide</li>
+              <li><b>U</b> — Uremia</li>
+              <li><b>T</b> — Toluene (often mixed AG + non-AG)</li>
+              <li><b>E</b> — Ethylene glycol</li>
+              <li><b>D</b> — Diabetic ketoacidosis</li>
+              <li><b>I</b> — Isoniazid / Iron</li>
+              <li><b>M</b> — Methanol</li>
+              <li><b>P</b> — Propylene glycol</li>
+              <li><b>L</b> — Lactic acidosis</li>
+              <li><b>S</b> — Salicylates (often mixed resp alkalosis + AGMA)</li>
+            </ul>
+          </div>
+          <div class="mnemoCard">
+            <h3>HARDUP (Non–anion gap metabolic acidosis)</h3>
+            <ul>
+              <li><b>H</b> — Hyperalimentation / excess chloride (e.g., TPN)</li>
+              <li><b>A</b> — Acetazolamide</li>
+              <li><b>R</b> — Renal tubular acidosis (Type 1/2/4)</li>
+              <li><b>D</b> — Diarrhea (GI bicarbonate loss)</li>
+              <li><b>U</b> — Ureteral diversion (ileal conduit/neobladder)</li>
+              <li><b>P</b> — Pancreatic fistula (bicarbonate-rich loss)</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <div class="grid2" style="margin-top:12px;">
@@ -181,9 +227,7 @@
   }
   function setUnits(u){ $("units").textContent = `Units: ${u}`; }
   function setNotes(t){ $("notes").textContent = t || ""; }
-  function setCalcSteps(lines){
-    $("calcSteps").textContent = lines && lines.length ? lines.join("\n") : "—";
-  }
+  function setCalcSteps(lines){ $("calcSteps").textContent = lines && lines.length ? lines.join("\n") : "—"; }
 
   // Tabs
   const tabs=[...document.querySelectorAll(".tab")];
@@ -195,37 +239,17 @@
   }
   tabs.forEach(t=>t.addEventListener("click",()=>showTab(t.dataset.tab)));
 
-  // State
   let state = null;
 
-  // Core math helpers
-  function vbgToAbg(ph, pco2, hco3){
-    return { ph: ph + 0.05, pco2: pco2 - 5, hco3: hco3 };
-  }
+  // Helpers
+  function vbgToAbg(ph, pco2, hco3){ return { ph: ph + 0.05, pco2: pco2 - 5, hco3: hco3 }; }
   function anionGap(na, cl, hco3){ return na - (cl + hco3); }
-  function agCorrected(ag, alb){ return ag + 2.5*(4.0 - alb); } // if albumin known
+  function agCorrected(ag, alb){ return ag + 2.5*(4.0 - alb); }
 
-  // Compensation rules
-  function wintersExpectedPco2(hco3){
-    const exp = 1.5*hco3 + 8;
-    return { exp, low: exp-2, high: exp+2 };
-  }
-  function metAlkExpectedPco2(hco3){
-    const exp = 0.7*(hco3 - 24) + 40;
-    return { exp, low: exp-5, high: exp+5 };
-  }
-  function respAcidExpectedHco3(pco2){
-    const delta = pco2 - 40;
-    const acute = 24 + 1.0*(delta/10);
-    const chronic = 24 + 3.5*(delta/10);
-    return { acute, chronic };
-  }
-  function respAlkExpectedHco3(pco2){
-    const delta = pco2 - 40; // negative if alkalosis
-    const acute = 24 + 2.0*(delta/10);
-    const chronic = 24 + 5.0*(delta/10);
-    return { acute, chronic };
-  }
+  function wintersExpectedPco2(hco3){ const exp = 1.5*hco3 + 8; return { exp, low: exp-2, high: exp+2 }; }
+  function metAlkExpectedPco2(hco3){ const exp = 0.7*(hco3 - 24) + 40; return { exp, low: exp-5, high: exp+5 }; }
+  function respAcidExpectedHco3(pco2){ const delta = pco2 - 40; return { acute: 24 + 1.0*(delta/10), chronic: 24 + 3.5*(delta/10) }; }
+  function respAlkExpectedHco3(pco2){ const delta = pco2 - 40; return { acute: 24 + 2.0*(delta/10), chronic: 24 + 5.0*(delta/10) }; }
 
   function classifyPH(ph){
     if(ph < 7.35) return "Acidemia";
@@ -235,20 +259,18 @@
 
   function primaryProcess(ph, pco2, hco3){
     if(ph < 7.35){
-      const metabolic = (hco3 < 22);
-      const respiratory = (pco2 > 45);
+      const metabolic = (hco3 < 22), respiratory = (pco2 > 45);
       if(metabolic && !respiratory) return "Primary metabolic acidosis";
       if(respiratory && !metabolic) return "Primary respiratory acidosis";
-      if(metabolic && respiratory) return "Mixed: metabolic + respiratory acidosis (both contribute)";
-      return "Acidemia with borderline drivers (consider mixed/compensation)";
+      if(metabolic && respiratory) return "Mixed: metabolic + respiratory acidosis";
+      return "Acidemia with borderline drivers";
     }
     if(ph > 7.45){
-      const metabolic = (hco3 > 26);
-      const respiratory = (pco2 < 35);
+      const metabolic = (hco3 > 26), respiratory = (pco2 < 35);
       if(metabolic && !respiratory) return "Primary metabolic alkalosis";
       if(respiratory && !metabolic) return "Primary respiratory alkalosis";
-      if(metabolic && respiratory) return "Mixed: metabolic + respiratory alkalosis (both contribute)";
-      return "Alkalemia with borderline drivers (consider mixed/compensation)";
+      if(metabolic && respiratory) return "Mixed: metabolic + respiratory alkalosis";
+      return "Alkalemia with borderline drivers";
     }
     const metabT = (hco3 < 22) ? "metabolic acidosis tendency" : (hco3 > 26) ? "metabolic alkalosis tendency" : "HCO₃ near normal";
     const respT  = (pco2 > 45) ? "respiratory acidosis tendency" : (pco2 < 35) ? "respiratory alkalosis tendency" : "pCO₂ near normal";
@@ -256,11 +278,36 @@
   }
 
   function inferAcuteChronic(measured, acute, chronic){
-    const dA = Math.abs(measured - acute);
-    const dC = Math.abs(measured - chronic);
+    const dA = Math.abs(measured - acute), dC = Math.abs(measured - chronic);
     if(dA < dC) return { closer: "acute-pattern", dist: dA };
     if(dC < dA) return { closer: "chronic-pattern", dist: dC };
     return { closer: "equidistant", dist: dA };
+  }
+
+  function deltaDeltaMeaning(dd){
+    if(dd < 0.8) return "Δ–Δ < 0.8: AG metabolic acidosis + concurrent non–anion gap metabolic acidosis (extra HCO₃ loss).";
+    if(dd <= 2.0) return "Δ–Δ 0.8–2.0: isolated (“pure”) anion gap metabolic acidosis.";
+    return "Δ–Δ > 2.0: anion gap metabolic acidosis + concurrent metabolic alkalosis (e.g., vomiting/diuretics/post-hypercapnia).";
+  }
+
+  function showDeltaGauge(dd){
+    const cap = 4.0;
+    const v = Math.max(0, Math.min(cap, dd));
+    const pct = (v/cap)*100;
+    $("deltaGauge").style.display = "block";
+    $("ddFill").style.width = pct + "%";
+    $("ddMarker").style.left = pct + "%";
+    $("ddMeaning").textContent = `${fmt(dd,2)} → ${deltaDeltaMeaning(dd)}`;
+  }
+  function hideDeltaGauge(){
+    $("deltaGauge").style.display = "none";
+    $("ddFill").style.width = "0%";
+    $("ddMarker").style.left = "0%";
+    $("ddMeaning").textContent = "—";
+  }
+
+  function showMnemonics(show){
+    $("mnemoWrap").style.display = show ? "block" : "none";
   }
 
   function runAnalysis(){
@@ -268,17 +315,17 @@
 
     clearKPI();
     setUnits("mEq/L, mmHg");
-    $("mnemonicBox").style.display="none";
+    hideDeltaGauge();
+    showMnemonics(false);
 
     const steps = [];
     const {sampleType, inPh, inPco2, inHco3, abgPh, abgPco2, abgHco3, na, cl, alb} = state;
 
-    // Visible VBG->ABG math
     if(sampleType === "VBG"){
       steps.push("VBG → ABG estimate (per your rule):");
-      steps.push(`  pH_ABG = pH_VBG + 0.05 = ${fmt(inPh,2)} + 0.05 = ${fmt(abgPh,2)}`);
-      steps.push(`  pCO2_ABG = pCO2_VBG - 5 = ${fmt(inPco2,1)} - 5 = ${fmt(abgPco2,1)} mmHg`);
-      steps.push(`  HCO3_ABG = HCO3_VBG (unchanged) = ${fmt(abgHco3,1)} mEq/L`);
+      steps.push(`  pH_ABG = ${fmt(inPh,2)} + 0.05 = ${fmt(abgPh,2)}`);
+      steps.push(`  pCO2_ABG = ${fmt(inPco2,1)} - 5 = ${fmt(abgPco2,1)} mmHg`);
+      steps.push(`  HCO3_ABG = ${fmt(abgHco3,1)} mEq/L (unchanged)`);
       steps.push("");
     } else {
       steps.push("ABG selected: using entered values directly.");
@@ -286,162 +333,94 @@
     }
 
     addKPI("Sample type", sampleType, "");
-    addKPI("Input pH / pCO₂ / HCO₃", `${fmt(inPh,2)} / ${fmt(inPco2,1)} / ${fmt(inHco3,1)}`, "");
     addKPI("Values used (ABG) pH / pCO₂ / HCO₃", `${fmt(abgPh,2)} / ${fmt(abgPco2,1)} / ${fmt(abgHco3,1)}`, "");
-
-    const phStatus = classifyPH(abgPh);
-    addKPI("pH status", phStatus, "");
-
-    const primary = primaryProcess(abgPh, abgPco2, abgHco3);
-    addKPI("Primary assessment", primary, "");
+    addKPI("pH status", classifyPH(abgPh), "");
+    addKPI("Primary assessment", primaryProcess(abgPh, abgPco2, abgHco3), "");
 
     let flags = [];
+    let showCute = false;
+    let showHardup = false;
 
-    // -----------------------
-    // ACIDEMIA BRANCH
-    // -----------------------
+    // ACIDEMIA
     if(abgPh < 7.35){
       if(abgHco3 < 22){
-        // AG FIRST
+        // Metabolic acidosis → compute AG if possible
         if(na!==null && cl!==null){
           const ag = anionGap(na, cl, abgHco3);
-
-          steps.push("Anion gap (AG):");
-          steps.push(`  AG = Na - (Cl + HCO3) = ${fmt(na,1)} - (${fmt(cl,1)} + ${fmt(abgHco3,1)}) = ${fmt(ag,2)} mEq/L`);
-
           addKPI("Anion gap (AG)", fmt(ag,2), "mEq/L");
+          steps.push(`AG = ${fmt(na,1)} - (${fmt(cl,1)} + ${fmt(abgHco3,1)}) = ${fmt(ag,2)}`);
 
           let agUse = ag;
           if(alb!==null){
             const agc = agCorrected(ag, alb);
             agUse = agc;
-
-            steps.push("Albumin-corrected AG (if albumin provided):");
-            steps.push(`  AGcorr = AG + 2.5*(4 - Alb) = ${fmt(ag,2)} + 2.5*(4 - ${fmt(alb,2)}) = ${fmt(agc,2)} mEq/L`);
-
             addKPI("Albumin-corrected AG", fmt(agc,2), "mEq/L");
-          } else {
-            steps.push("Albumin not provided → AGcorr not computed.");
+            steps.push(`AGcorr = ${fmt(ag,2)} + 2.5*(4 - ${fmt(alb,2)}) = ${fmt(agc,2)}`);
           }
 
-          const agElev = (agUse > 14); // fixed normal 12 + buffer
+          const agElev = (agUse > 14);
           addKPI("AG status", agElev ? "Elevated AG" : "Normal AG", "");
 
-          if(agElev){
-            $("mnemonicBox").style.display="block"; // show mnemonic when AG is elevated
+          // If AG elevated, show CUTE DIMPLES
+          if(agElev) showCute = true;
 
+          // If AG normal but metabolic acidosis present → NAGMA causes (HARDUP)
+          if(!agElev) showHardup = true;
+
+          // Delta–delta if AG elevated
+          if(agElev){
             const dAG = agUse - 12;
             const dH = 24 - abgHco3;
-
-            steps.push("");
-            steps.push("Delta–delta (only if AG elevated):");
-            steps.push(`  ΔAG = AG(use) - 12 = ${fmt(agUse,2)} - 12 = ${fmt(dAG,2)}`);
-            steps.push(`  ΔHCO3 = 24 - HCO3 = 24 - ${fmt(abgHco3,1)} = ${fmt(dH,2)}`);
-
             if(dH > 0){
               const dd = dAG / dH;
-              steps.push(`  ΔΔ = ΔAG / ΔHCO3 = ${fmt(dAG,2)} / ${fmt(dH,2)} = ${fmt(dd,2)}`);
-
-              addKPI("ΔAG", fmt(dAG,2), "mEq/L");
-              addKPI("ΔHCO₃", fmt(dH,2), "mEq/L");
               addKPI("Delta–delta (ΔAG/ΔHCO₃)", fmt(dd,2), "");
+              addKPI("Delta–delta meaning", deltaDeltaMeaning(dd), "");
+              showDeltaGauge(dd);
 
-              if(dd < 0.8) flags.push("Delta–delta < 0.8: concurrent NAGMA suspected.");
-              else if(dd > 2.0) flags.push("Delta–delta > 2.0: concurrent metabolic alkalosis (or chronic resp acidosis) suspected.");
-            } else {
-              steps.push("  ΔHCO3 ≤ 0 → delta–delta not applicable.");
+              // If dd suggests concurrent NAGMA → show HARDUP too
+              if(dd < 0.8) showHardup = true;
+
+              // If dd suggests Met Alk → keep CUTE DIMPLES; (met alk causes are clinical, not mnemonic here)
+              if(dd > 2.0) flags.push("Δ–Δ > 2: AGMA + concurrent metabolic alkalosis suspected.");
+
+              steps.push(`ΔAG = ${fmt(agUse,2)} - 12 = ${fmt(dAG,2)}`);
+              steps.push(`ΔHCO3 = 24 - ${fmt(abgHco3,1)} = ${fmt(dH,2)}`);
+              steps.push(`ΔΔ = ${fmt(dAG,2)} / ${fmt(dH,2)} = ${fmt(dd,2)}`);
             }
           }
-
         } else {
-          flags.push("Na/Cl not provided: AG and delta–delta not computed (metabolic acidosis present).");
-          steps.push("Na and/or Cl missing → cannot compute AG or delta–delta.");
+          flags.push("Na/Cl missing → cannot compute AG or delta–delta.");
         }
 
-        // THEN Winter’s
+        // Winter's
         const w = wintersExpectedPco2(abgHco3);
-        steps.push("");
-        steps.push("Winter’s expected pCO₂ (metabolic acidosis):");
-        steps.push(`  Expected pCO2 = 1.5*HCO3 + 8 ± 2 = 1.5*${fmt(abgHco3,1)} + 8 = ${fmt(w.exp,1)} (range ${fmt(w.low,1)}–${fmt(w.high,1)}) mmHg`);
-        steps.push(`  Measured pCO2 = ${fmt(abgPco2,1)} mmHg`);
-
         addKPI("Winter’s expected pCO₂", `${fmt(w.exp,1)} (range ${fmt(w.low,1)}–${fmt(w.high,1)})`, "mmHg");
         if(abgPco2 < w.low) flags.push("pCO₂ below Winter’s range: concurrent respiratory alkalosis.");
         if(abgPco2 > w.high) flags.push("pCO₂ above Winter’s range: concurrent respiratory acidosis.");
       } else {
-        // Respiratory acidosis branch: expected HCO3 acute/chronic
+        // primary respiratory acidosis branch
         const exp = respAcidExpectedHco3(abgPco2);
-
-        steps.push("Respiratory acidosis compensation (expected HCO₃):");
-        steps.push(`  ΔpCO2 = pCO2 - 40 = ${fmt(abgPco2,1)} - 40 = ${fmt(abgPco2-40,1)}`);
-        steps.push(`  Acute: HCO3 = 24 + 1*(ΔpCO2/10) = ${fmt(exp.acute,1)} mEq/L`);
-        steps.push(`  Chronic: HCO3 = 24 + 3.5*(ΔpCO2/10) = ${fmt(exp.chronic,1)} mEq/L`);
-        steps.push(`  Measured HCO3 = ${fmt(abgHco3,1)} mEq/L`);
-
         addKPI("Resp acid expected HCO₃ (acute/chronic)", `${fmt(exp.acute,1)} / ${fmt(exp.chronic,1)}`, "mEq/L");
         const inf = inferAcuteChronic(abgHco3, exp.acute, exp.chronic);
         addKPI("Closest pattern", inf.closer, "");
-        if(inf.dist > 4) flags.push("HCO₃ far from expected acute/chronic: mixed metabolic disorder suspected.");
       }
     }
 
-    // -----------------------
-    // ALKALEMIA BRANCH
-    // -----------------------
+    // ALKALEMIA
     if(abgPh > 7.45){
       if(abgHco3 > 26){
         const m = metAlkExpectedPco2(abgHco3);
-
-        steps.push("Metabolic alkalosis compensation (expected pCO₂):");
-        steps.push(`  Expected pCO2 = 0.7*(HCO3 - 24) + 40 ± 5`);
-        steps.push(`           = 0.7*(${fmt(abgHco3,1)} - 24) + 40 = ${fmt(m.exp,1)} (range ${fmt(m.low,1)}–${fmt(m.high,1)}) mmHg`);
-        steps.push(`  Measured pCO2 = ${fmt(abgPco2,1)} mmHg`);
-
         addKPI("Met alk expected pCO₂", `${fmt(m.exp,1)} (range ${fmt(m.low,1)}–${fmt(m.high,1)})`, "mmHg");
-        if(abgPco2 < m.low) flags.push("pCO₂ below expected: concurrent respiratory alkalosis.");
-        if(abgPco2 > m.high) flags.push("pCO₂ above expected: concurrent respiratory acidosis.");
       } else {
         const exp = respAlkExpectedHco3(abgPco2);
-
-        steps.push("Respiratory alkalosis compensation (expected HCO₃):");
-        steps.push(`  ΔpCO2 = pCO2 - 40 = ${fmt(abgPco2,1)} - 40 = ${fmt(abgPco2-40,1)}`);
-        steps.push(`  Acute: HCO3 = 24 + 2*(ΔpCO2/10) = ${fmt(exp.acute,1)} mEq/L`);
-        steps.push(`  Chronic: HCO3 = 24 + 5*(ΔpCO2/10) = ${fmt(exp.chronic,1)} mEq/L`);
-        steps.push(`  Measured HCO3 = ${fmt(abgHco3,1)} mEq/L`);
-
         addKPI("Resp alk expected HCO₃ (acute/chronic)", `${fmt(exp.acute,1)} / ${fmt(exp.chronic,1)}`, "mEq/L");
-        const inf = inferAcuteChronic(abgHco3, exp.acute, exp.chronic);
-        addKPI("Closest pattern", inf.closer, "");
-        if(inf.dist > 4) flags.push("HCO₃ far from expected acute/chronic: mixed metabolic disorder suspected.");
-
-        // optional AG check if HCO3 low + alkalemia (mixed)
-        if(abgHco3 < 22 && na!==null && cl!==null){
-          const ag = anionGap(na, cl, abgHco3);
-          steps.push("");
-          steps.push("Safety-net AG check (alkalemia with low HCO₃ suggests mixed):");
-          steps.push(`  AG = ${fmt(na,1)} - (${fmt(cl,1)} + ${fmt(abgHco3,1)}) = ${fmt(ag,2)} mEq/L`);
-          addKPI("Anion gap (AG) (check)", fmt(ag,2), "mEq/L");
-          flags.push("Low HCO₃ with alkalemia suggests mixed disorder; AG shown for context.");
-        }
       }
     }
 
-    // -----------------------
-    // NEAR-NORMAL pH BRANCH
-    // -----------------------
-    if(abgPh >= 7.35 && abgPh <= 7.45){
-      flags.push("Near-normal pH: consider mixed disorders; interpret with compensation expectations and clinical context.");
-      steps.push("Near-normal pH: mixed disorders are common; use compensation patterns + clinical context.");
-      if(na!==null && cl!==null){
-        const ag = anionGap(na, cl, abgHco3);
-        steps.push(`AG (context): ${fmt(na,1)} - (${fmt(cl,1)} + ${fmt(abgHco3,1)}) = ${fmt(ag,2)} mEq/L`);
-        addKPI("Anion gap (AG)", fmt(ag,2), "mEq/L");
-        if(alb!==null){
-          const agc = agCorrected(ag, alb);
-          steps.push(`AGcorr: ${fmt(ag,2)} + 2.5*(4 - ${fmt(alb,2)}) = ${fmt(agc,2)} mEq/L`);
-          addKPI("Albumin-corrected AG", fmt(agc,2), "mEq/L");
-        }
-      }
+    // If either mnemonic set triggered, show both side-by-side
+    if(showCute || showHardup){
+      showMnemonics(true);
+      if(showCute && showHardup) flags.push("Both AGMA and NAGMA causes are relevant (mixed metabolic acidosis suspected).");
     }
 
     setCalcSteps(steps);
@@ -490,7 +469,8 @@
     setUnits("—");
     setNotes("Reset.");
     setCalcSteps([]);
-    $("mnemonicBox").style.display="none";
+    hideDeltaGauge();
+    $("mnemoWrap").style.display="none";
     $("errGas").textContent=""; $("errAnalysis").textContent="";
     showTab("gas");
   }
@@ -502,7 +482,6 @@
   });
   $("backBtn").addEventListener("click", ()=>showTab("gas"));
 
-  // init
   setUnits("—");
   setNotes("Enter values and tap Run.");
   setCalcSteps([]);
