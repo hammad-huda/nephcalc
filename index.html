@@ -50,16 +50,20 @@
     .mnemoCard{border:1px solid rgba(106,166,255,.25);background:rgba(106,166,255,.06);padding:12px;border-radius:12px}
     .mnemoCard h3{margin:0 0 8px;font-size:13px}
     .mnemoCard ul{margin:0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.4}
+    .presetRow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
     @media(min-width:980px){
       main{grid-template-columns:1.0fr 1.0fr}
       .mnemoGrid{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:540px){
+      .presetRow{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
 <header>
   <h1>Acid–Base (Nephro)</h1>
-  <p>Visible math + AGMA vs NAGMA causes + Osm Gap for possible toxic ingestion.</p>
+  <p>Visible math + AGMA vs NAGMA causes + Osm Gap + Metabolic alkalosis (urine Cl) + Lactate & UA ketones.</p>
 </header>
 
 <main>
@@ -119,12 +123,61 @@
         </div>
       </div>
 
+      <!-- NEW: Lactate + UA ketones -->
+      <div class="grid3" style="margin-top:10px;">
+        <div>
+          <div class="label">Lactate (mmol/L) (optional)</div>
+          <input id="lact" type="number" step="any" placeholder="e.g., 6.2">
+        </div>
+        <div>
+          <div class="label">UA ketones (optional)</div>
+          <select id="uket">
+            <option value="">—</option>
+            <option value="negative">Negative</option>
+            <option value="trace">Trace</option>
+            <option value="small">Small</option>
+            <option value="moderate">Moderate</option>
+            <option value="large">Large</option>
+          </select>
+        </div>
+        <div>
+          <div class="label">Note</div>
+          <input value="Lactate supports lactic acidosis; UA ketones support ketoacidosis" disabled>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <!-- METABOLIC ALKALOSIS WORKUP INPUTS -->
+      <div class="foot" style="margin-bottom:8px;">
+        <b>Metabolic alkalosis workup helpers</b><br>
+        If HCO₃ is elevated (or primary metabolic alkalosis suspected), enter urine chloride to classify chloride responsive vs resistant.
+      </div>
+      <div class="grid3">
+        <div>
+          <div class="label">Urine chloride (mEq/L) (optional)</div>
+          <input id="ucl" type="number" step="any" placeholder="e.g., 8 or 45">
+        </div>
+        <div>
+          <div class="label">BP category (optional)</div>
+          <select id="bpCat">
+            <option value="">—</option>
+            <option value="high">High BP</option>
+            <option value="normal">Normal / Low BP</option>
+          </select>
+        </div>
+        <div>
+          <div class="label">UCl cutoff (fixed)</div>
+          <input value="<20 responsive; ≥20 resistant" disabled>
+        </div>
+      </div>
+
       <div class="hr"></div>
 
       <!-- OSMOLALITY / OSM GAP -->
       <div class="foot" style="margin-bottom:8px;">
         <b>Osmolality / Osm Gap (to screen for toxic alcohols)</b><br>
-        Calculated Osm = 2×Na + Glucose/18 + BUN/2.8 + Ethanol/3.7 (all in mg/dL; ethanol optional)
+        Calculated Osm = 2×Na + Glucose/18 + BUN/2.8 + Ethanol/3.7 (mg/dL; ethanol optional)
       </div>
 
       <div class="grid3">
@@ -157,6 +210,16 @@
         </div>
       </div>
 
+      <!-- PRESETS -->
+      <div class="foot" style="margin-top:12px;">
+        <b>One-tap preset scenarios</b> (fills Inputs + runs)
+      </div>
+      <div class="presetRow">
+        <button id="preset_dd_gt2">Preset: Δ–Δ &gt; 2 (AGMA + Met Alk)</button>
+        <button id="preset_dd_lt08">Preset: Δ–Δ &lt; 0.8 (AGMA + NAGMA)</button>
+        <button id="preset_salic">Preset: “Salicylate-like” (Resp Alk + AGMA)</button>
+      </div>
+
       <div class="grid2" style="margin-top:12px;">
         <button id="runBtn">Run</button>
         <button id="resetBtn" type="button">Reset</button>
@@ -177,8 +240,8 @@
         <h3>Delta–delta visual (ΔAG/ΔHCO₃)</h3>
         <div class="bar">
           <div class="fill" id="ddFill"></div>
-          <div class="tick" style="left:20%"></div>  <!-- 0.8 on 0–4 scale -->
-          <div class="tick" style="left:50%"></div>  <!-- 2.0 on 0–4 scale -->
+          <div class="tick" style="left:20%"></div>
+          <div class="tick" style="left:50%"></div>
           <div class="marker" id="ddMarker" style="left:0%"></div>
         </div>
         <div class="legend">
@@ -196,6 +259,13 @@
         <h3>Osmolality / Osm Gap</h3>
         <div class="explain" style="margin-top:0;">
           <p id="osmMeaning">—</p>
+        </div>
+      </div>
+
+      <div id="metAlkBox" class="gauge" style="display:none;">
+        <h3>Metabolic alkalosis workup</h3>
+        <div class="explain" style="margin-top:0;">
+          <p id="metAlkMeaning">—</p>
         </div>
       </div>
 
@@ -290,17 +360,20 @@
   function vbgToAbg(ph, pco2, hco3){ return { ph: ph + 0.05, pco2: pco2 - 5, hco3: hco3 }; }
   function anionGap(na, cl, hco3){ return na - (cl + hco3); }
   function agCorrected(ag, alb){ return ag + 2.5*(4.0 - alb); }
-  function calcOsm(na, glu, bun, etoh){
-    // Na in mEq/L; others mg/dL; ethanol optional
-    // Calculated Osm (mOsm/kg) = 2*Na + Glu/18 + BUN/2.8 + EtOH/3.7
-    return 2*na + (glu/18) + (bun/2.8) + (etoh/3.7);
-  }
+  function calcOsm(na, glu, bun, etoh){ return 2*na + (glu/18) + (bun/2.8) + (etoh/3.7); }
 
   // Compensation rules
   function wintersExpectedPco2(hco3){ const exp = 1.5*hco3 + 8; return { exp, low: exp-2, high: exp+2 }; }
   function metAlkExpectedPco2(hco3){ const exp = 0.7*(hco3 - 24) + 40; return { exp, low: exp-5, high: exp+5 }; }
-  function respAcidExpectedHco3(pco2){ const delta = pco2 - 40; return { acute: 24 + 1.0*(delta/10), chronic: 24 + 3.5*(delta/10) }; }
-  function respAlkExpectedHco3(pco2){ const delta = pco2 - 40; return { acute: 24 + 2.0*(delta/10), chronic: 24 + 5.0*(delta/10) }; }
+  function respAcidExpectedHco3(pco2){
+    const delta = pco2 - 40;
+    return { acute: 24 + 1.0*(delta/10), chronic: 24 + 3.5*(delta/10) };
+  }
+  function respAlkExpectedHco3(pco2){
+    // FIXED: when CO2 is low, HCO3 should fall
+    const delta = 40 - pco2;
+    return { acute: 24 - 2.0*(delta/10), chronic: 24 - 5.0*(delta/10) };
+  }
 
   function classifyPH(ph){
     if(ph < 7.35) return "Acidemia";
@@ -326,13 +399,6 @@
     const metabT = (hco3 < 22) ? "metabolic acidosis tendency" : (hco3 > 26) ? "metabolic alkalosis tendency" : "HCO₃ near normal";
     const respT  = (pco2 > 45) ? "respiratory acidosis tendency" : (pco2 < 35) ? "respiratory alkalosis tendency" : "pCO₂ near normal";
     return `Near-normal pH: ${metabT}; ${respT}`;
-  }
-
-  function inferAcuteChronic(measured, acute, chronic){
-    const dA = Math.abs(measured - acute), dC = Math.abs(measured - chronic);
-    if(dA < dC) return { closer: "acute-pattern", dist: dA };
-    if(dC < dA) return { closer: "chronic-pattern", dist: dC };
-    return { closer: "equidistant", dist: dA };
   }
 
   function deltaDeltaMeaning(dd){
@@ -368,6 +434,15 @@
     $("osmMeaning").textContent = "—";
   }
 
+  function showMetAlkBox(text){
+    $("metAlkBox").style.display = "block";
+    $("metAlkMeaning").textContent = text;
+  }
+  function hideMetAlkBox(){
+    $("metAlkBox").style.display = "none";
+    $("metAlkMeaning").textContent = "—";
+  }
+
   function runAnalysis(){
     if(!state) throw new Error("No data available. Go to Inputs and tap Run.");
 
@@ -375,13 +450,16 @@
     setUnits("mEq/L, mmHg, mOsm/kg");
     hideDeltaGauge();
     hideOsmBox();
+    hideMetAlkBox();
     showMnemonics(false);
 
     const steps = [];
     const {
       sampleType, inPh, inPco2, inHco3, abgPh, abgPco2, abgHco3,
       na, cl, alb,
-      osm_meas, glu, bun, etoh
+      lact, uket,
+      osm_meas, glu, bun, etoh,
+      ucl, bpCat
     } = state;
 
     // Visible VBG->ABG
@@ -405,9 +483,14 @@
     let showHardup = false;
     let agElev = false;
 
-    // Acid-base (same logic as before, condensed)
-    if(abgPh < 7.35 && abgHco3 < 22){
-      // Metabolic acidosis: compute AG if possible
+    // --- METABOLIC ACIDOSIS MODULE ---
+    // Trigger whenever HCO3 is low (mixed disorders allowed).
+    const hasLowHCO3 = (abgHco3 < 22);
+
+    if(hasLowHCO3){
+      steps.push("");
+      steps.push("Metabolic acidosis module triggered because HCO₃ < 22 (mixed disorders allowed).");
+
       if(na!==null && cl!==null){
         const ag = anionGap(na, cl, abgHco3);
         addKPI("Anion gap (AG)", fmt(ag,2), "mEq/L");
@@ -427,7 +510,29 @@
         if(agElev) showCute = true;
         if(!agElev) showHardup = true;
 
-        // Delta–delta (only if AG elevated)
+        // Lactate + UA ketones (most useful when AGMA is present)
+        if(agElev){
+          if(lact !== null){
+            addKPI("Lactate", fmt(lact,2), "mmol/L");
+            const lacHigh = lact >= 2.0;
+            steps.push(`Lactate = ${fmt(lact,2)} mmol/L → ${lacHigh ? "elevated" : "not elevated"}`);
+            if(lact >= 4.0) flags.push("Lactate ≥4: lactic acidosis strongly supported (context-dependent).");
+            else if(lact >= 2.0) flags.push("Lactate 2–3.9: consider lactic acidosis depending on context.");
+          } else {
+            flags.push("AGMA present: lactate not provided (consider checking).");
+          }
+
+          if(uket){
+            addKPI("UA ketones", uket, "");
+            const pos = (uket !== "negative");
+            steps.push(`UA ketones = ${uket} → ${pos ? "supports ketoacidosis (DKA/starvation/alcoholic)" : "does not support ketotic process"}`);
+            if(pos) flags.push("Positive urine ketones: ketoacidosis supported; correlate with glucose/β-hydroxybutyrate.");
+          } else {
+            flags.push("AGMA present: UA ketones not provided (consider checking).");
+          }
+        }
+
+        // Delta–delta only if AG elevated
         if(agElev){
           const dAG = agUse - 12;
           const dH = 24 - abgHco3;
@@ -449,16 +554,64 @@
         flags.push("Na/Cl missing → cannot compute AG or delta–delta.");
       }
 
-      // Winter’s
       const w = wintersExpectedPco2(abgHco3);
       addKPI("Winter’s expected pCO₂", `${fmt(w.exp,1)} (range ${fmt(w.low,1)}–${fmt(w.high,1)})`, "mmHg");
       if(abgPco2 < w.low) flags.push("pCO₂ below Winter’s: concurrent respiratory alkalosis.");
       if(abgPco2 > w.high) flags.push("pCO₂ above Winter’s: concurrent respiratory acidosis.");
     }
 
-    // Osm gap section (independent of pH; but most helpful if AGMA present)
-    // Needs Na + (glu,bun default 0 if missing) and measured osm to compute gap.
-    const canCalcOsm = (na !== null) && ( (glu!==null) || (bun!==null) || (etoh!==null) || true );
+    // --- METABOLIC ALKALOSIS MODULE ---
+    const hasHighHCO3 = (abgHco3 > 26);
+    if(hasHighHCO3){
+      steps.push("");
+      steps.push("Metabolic alkalosis module triggered because HCO₃ > 26.");
+
+      const exp = metAlkExpectedPco2(abgHco3);
+      addKPI("Met alk expected pCO₂", `${fmt(exp.exp,1)} (range ${fmt(exp.low,1)}–${fmt(exp.high,1)})`, "mmHg");
+      if(abgPco2 < exp.low) flags.push("pCO₂ below expected for met alk: concurrent respiratory alkalosis.");
+      if(abgPco2 > exp.high) flags.push("pCO₂ above expected for met alk: concurrent respiratory acidosis.");
+
+      if(ucl !== null){
+        addKPI("Urine chloride", fmt(ucl,1), "mEq/L");
+        const responsive = (ucl < 20);
+        let msg = responsive
+          ? "Chloride-responsive (UCl < 20): think vomiting/NG suction, remote diuretic use, post-hypercapnia, volume depletion/low effective arterial blood volume. Treat with chloride + volume (as appropriate) and address cause."
+          : "Chloride-resistant (UCl ≥ 20): proceed to BP-based split.";
+
+        if(!responsive){
+          if(bpCat === "high"){
+            msg += " High BP: consider primary hyperaldosteronism, Liddle syndrome, Cushing/mineralocorticoid excess, licorice/apparent mineralocorticoid excess.";
+          } else if(bpCat === "normal"){
+            msg += " Normal/low BP: consider Bartter or Gitelman syndromes, ongoing diuretic exposure, hypomagnesemia (esp. Gitelman).";
+          } else {
+            msg += " BP not provided: high BP → hyperaldo/Liddle; normal/low BP → Bartter/Gitelman/diuretics.";
+          }
+        } else {
+          msg += " Practical bucket: vomiting/NG suction vs diuretics (timing matters).";
+        }
+
+        showMetAlkBox(msg);
+
+        steps.push("");
+        steps.push("Metabolic alkalosis urine chloride classification:");
+        steps.push(`  UCl = ${fmt(ucl,1)} mEq/L → ${responsive ? "chloride-responsive (<20)" : "chloride-resistant (≥20)"}`);
+        if(!responsive) steps.push(`  BP category = ${bpCat ? bpCat : "not provided"}`);
+      } else {
+        showMetAlkBox("HCO₃ is elevated, but urine chloride not entered. If available: UCl <20 → chloride-responsive; UCl ≥20 → chloride-resistant (then split by BP: high → hyperaldo/Liddle; normal/low → Bartter/Gitelman/diuretics).");
+      }
+    }
+
+    // Respiratory modules (optional expected HCO3 display)
+    if(abgPh < 7.35 && abgPco2 > 45){
+      const exp = respAcidExpectedHco3(abgPco2);
+      addKPI("Resp acidosis expected HCO₃", `acute ${fmt(exp.acute,1)}; chronic ${fmt(exp.chronic,1)}`, "mEq/L");
+    }
+    if(abgPh > 7.45 && abgPco2 < 35){
+      const exp = respAlkExpectedHco3(abgPco2);
+      addKPI("Resp alkalosis expected HCO₃", `acute ${fmt(exp.acute,1)}; chronic ${fmt(exp.chronic,1)}`, "mEq/L");
+    }
+
+    // Osm gap
     if(osm_meas !== null && na !== null){
       const g = (glu ?? 0);
       const b = (bun ?? 0);
@@ -479,10 +632,10 @@
 
       let msg = `Osm gap ${fmt(gap,1)} mOsm/kg. `;
       if(gap > 20){
-        msg += "Strongly elevated (>20): consider toxic alcohols (ethylene glycol, methanol, propylene glycol) especially if high AG metabolic acidosis.";
+        msg += "Strongly elevated (>20): consider toxic alcohols (ethylene glycol, methanol, propylene glycol), especially if high AG metabolic acidosis.";
         flags.push("Osm gap >20: strong concern for toxic ingestion (context-dependent).");
       } else if(gap > 10){
-        msg += "Elevated (>10): possible unmeasured osmoles; interpret with clinical context and acid–base pattern.";
+        msg += "Elevated (>10): possible unmeasured osmoles; interpret with clinical context.";
         flags.push("Osm gap >10: possible unmeasured osmoles (toxins/other).");
       } else {
         msg += "Not significantly elevated (≤10): toxic alcohols less likely, but not excluded early or after metabolism/dialysis.";
@@ -491,13 +644,9 @@
       if(agElev) msg += " Given elevated AG, toxin ingestion rises on the differential (see CUTE DIMPLES).";
       showOsmBox(msg);
     } else {
-      // only show a note if user entered measured osm but lacks Na
-      if(osm_meas !== null && na === null){
-        flags.push("Measured osm provided but Na missing → cannot compute osm gap.");
-      }
+      if(osm_meas !== null && na === null) flags.push("Measured osm provided but Na missing → cannot compute osm gap.");
     }
 
-    // Mnemonics display: show if either relevant
     if(showCute || showHardup) showMnemonics(true);
 
     setCalcSteps(steps);
@@ -508,6 +657,7 @@
     try{
       $("errGas").textContent="";
       $("errAnalysis").textContent="";
+
       const sampleType = $("sampleType").value;
 
       const ph = must("pH", toNum($("ph").value));
@@ -518,6 +668,12 @@
       const cl = toNum($("cl").value);
       const alb = toNum($("alb").value);
 
+      const lact = toNum($("lact").value);
+      const uket = ($("uket").value || "");
+
+      const ucl = toNum($("ucl").value);
+      const bpCat = $("bpCat").value || "";
+
       const osm_meas = toNum($("osm_meas").value);
       const glu = toNum($("glu").value);
       const bun = toNum($("bun").value);
@@ -526,6 +682,7 @@
       if(ph < 6.8 || ph > 7.8) throw new Error("pH appears out of typical physiologic range.");
       if(pco2 < 5 || pco2 > 120) throw new Error("pCO₂ appears out of typical physiologic range.");
       if(hco3 < 1 || hco3 > 60) throw new Error("HCO₃ appears out of typical physiologic range.");
+      if(lact !== null && (lact < 0 || lact > 30)) throw new Error("Lactate appears out of typical range.");
 
       const abg = (sampleType==="VBG") ? vbgToAbg(ph, pco2, hco3) : {ph, pco2, hco3};
 
@@ -534,6 +691,8 @@
         inPh: ph, inPco2: pco2, inHco3: hco3,
         abgPh: abg.ph, abgPco2: abg.pco2, abgHco3: abg.hco3,
         na, cl, alb,
+        lact, uket,
+        ucl, bpCat,
         osm_meas, glu, bun, etoh
       };
 
@@ -545,7 +704,9 @@
   }
 
   function resetAll(){
-    ["ph","pco2","hco3","na","cl","alb","osm_meas","glu","bun","etoh"].forEach(id=>$(id).value="");
+    ["ph","pco2","hco3","na","cl","alb","lact","ucl","osm_meas","glu","bun","etoh"].forEach(id=>$(id).value="");
+    $("uket").value="";
+    $("bpCat").value="";
     $("sampleType").value="ABG";
     state=null;
     clearKPI();
@@ -555,9 +716,52 @@
     $("deltaGauge").style.display="none";
     $("mnemoWrap").style.display="none";
     $("osmBox").style.display="none";
+    $("metAlkBox").style.display="none";
     $("errGas").textContent=""; $("errAnalysis").textContent="";
     showTab("gas");
   }
+
+  function fillAndRun(p){
+    const set = (id,val) => { if(val===undefined || val===null) return; $(id).value = val; };
+    if(p.sampleType) $("sampleType").value = p.sampleType;
+    set("ph", p.ph); set("pco2", p.pco2); set("hco3", p.hco3);
+    set("na", p.na); set("cl", p.cl); set("alb", p.alb);
+    set("lact", p.lact);
+    if(p.uket !== undefined) $("uket").value = p.uket;
+    set("ucl", p.ucl);
+    if(p.bpCat !== undefined) $("bpCat").value = p.bpCat;
+    set("osm_meas", p.osm_meas); set("glu", p.glu); set("bun", p.bun); set("etoh", p.etoh);
+    run();
+  }
+
+  // Presets
+  $("preset_dd_gt2").addEventListener("click", ()=>{
+    fillAndRun({
+      sampleType:"ABG",
+      ph: 7.42, pco2: 32, hco3: 20,
+      na: 140, cl: 90, alb: 4.0,
+      lact: 1.2, uket: "negative"
+    });
+  });
+
+  $("preset_dd_lt08").addEventListener("click", ()=>{
+    fillAndRun({
+      sampleType:"ABG",
+      ph: 7.26, pco2: 28, hco3: 12,
+      na: 140, cl: 108, alb: 4.0,
+      lact: 1.6, uket: "negative"
+    });
+  });
+
+  $("preset_salic").addEventListener("click", ()=>{
+    fillAndRun({
+      sampleType:"ABG",
+      ph: 7.49, pco2: 26, hco3: 19,
+      na: 140, cl: 96, alb: 4.0,
+      lact: 2.8, uket: "negative",
+      osm_meas: 290, glu: 100, bun: 14, etoh: 0
+    });
+  });
 
   $("runBtn").addEventListener("click", run);
   $("resetBtn").addEventListener("click", resetAll);
